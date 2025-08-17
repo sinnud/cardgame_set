@@ -269,7 +269,7 @@ Scoring: +1 for correct SET, -1 for incorrect guess"""
         
         for idx in self.selected_indices:
             original_canvas = self.get_canvas_for_card_index(idx)
-            original_canvas.config(bg='white')
+            original_canvas.config(bg='lightblue')
             self.draw_card_on_canvas(original_canvas, self.cards[idx])
 
     def update_selected_display(self):
