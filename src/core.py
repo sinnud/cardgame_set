@@ -31,27 +31,71 @@ class SetGame:
     
     def is_valid_set(self, card1, card2, card3):
         properties = ['shape', 'color', 'number', 'shading']
+        rule_details = {}
+        is_valid = True
         
         for prop in properties:
             values = [card1[prop], card2[prop], card3[prop]]
-            if not (len(set(values)) == 1 or len(set(values)) == 3):
-                return False
-        return True
+            unique_count = len(set(values))
+            
+            if unique_count == 1:
+                rule_details[prop] = {'status': 'satisfied', 'type': 'all_same', 'values': values}
+            elif unique_count == 3:
+                rule_details[prop] = {'status': 'satisfied', 'type': 'all_different', 'values': values}
+            else:
+                rule_details[prop] = {'status': 'violated', 'type': 'mixed', 'values': values}
+                is_valid = False
+        
+        return is_valid, rule_details
     
     def process_selection(self, selected_cards):
         if len(selected_cards) != 3:
             return False, "Must select exactly 3 cards"
         
-        is_set = self.is_valid_set(selected_cards[0], selected_cards[1], selected_cards[2])
+        is_set, rule_details = self.is_valid_set(selected_cards[0], selected_cards[1], selected_cards[2])
         
         if is_set:
             self.score += 1
-            result_msg = f"You Win! 🎉\nScore: {self.score}"
+            result_msg = f"You Win! 🎉\nScore: {self.score}\n\n"
+            result_msg += self._format_rule_explanation(rule_details, True)
         else:
             self.score -= 1
-            result_msg = f"You Lose! ❌\nScore: {self.score}"
+            result_msg = f"You Lose! ❌\nScore: {self.score}\n\n"
+            result_msg += self._format_rule_explanation(rule_details, False)
         
         return is_set, result_msg
+    
+    def _format_rule_explanation(self, rule_details, is_win):
+        explanation = "Rule Analysis:\n"
+        
+        property_names = {
+            'shape': 'Shape',
+            'color': 'Color', 
+            'number': 'Number',
+            'shading': 'Shading'
+        }
+        
+        for prop, details in rule_details.items():
+            prop_name = property_names[prop]
+            status = details['status']
+            rule_type = details['type']
+            values = details['values']
+            
+            if status == 'satisfied':
+                if rule_type == 'all_same':
+                    explanation += f"✓ {prop_name}: All same ({values[0]})\n"
+                else:  # all_different
+                    explanation += f"✓ {prop_name}: All different ({', '.join(map(str, values))})\n"
+            else:  # violated
+                explanation += f"✗ {prop_name}: Mixed - not all same or all different ({', '.join(map(str, values))})\n"
+        
+        if is_win:
+            explanation += "\nAll 4 rules satisfied - Valid SET!"
+        else:
+            satisfied_count = sum(1 for details in rule_details.values() if details['status'] == 'satisfied')
+            explanation += f"\nOnly {satisfied_count}/4 rules satisfied - Invalid SET"
+        
+        return explanation
     
     def get_replacement_cards(self, num_cards):
         if len(self.deck) == 0:
